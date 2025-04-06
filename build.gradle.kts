@@ -1,3 +1,6 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 /*
  * This file is part of dependency-check-gradle.
  *
@@ -24,6 +27,7 @@ plugins {
     id("project-report")
     id("build-dashboard")
     alias(libs.plugins.gradle.plugin.publish)
+    alias(libs.plugins.gradle.plugin.shadow)
 }
 
 group = "org.owasp"
@@ -50,6 +54,18 @@ tasks.test {
     useJUnitPlatform()
 }
 tasks.test.get().onlyIf { !project.hasProperty("skipTests") }
+
+tasks.shadowJar {
+    dependsOn(tasks["relocateShadowJar"])
+    archiveClassifier.set("")
+    isZip64 = true
+//        mergeServiceFiles() // if you have SPI/service loader stuff
+}
+
+tasks.create<ConfigureShadowRelocation>("relocateShadowJar") {
+    target = tasks["shadowJar"] as ShadowJar
+    prefix = "odc.shadow"
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
